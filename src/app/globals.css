@@ -11,3 +11,71 @@ body {
   color: var(--ink);
   font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
 }
+
+.shell,
+.login {
+  padding: 1.25rem 1.25rem calc(6.5rem + env(safe-area-inset-bottom));
+}
+
+.tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-around;
+  padding: 0.75rem 0.5rem calc(0.75rem + env(safe-area-inset-bottom));
+  background: #fffdf8;
+  border-top: 1px solid #e7e0d6;
+}
+
+.tabbar a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 1.05rem;
+  min-width: 4.5rem;
+  text-align: center;
+}
+
+.composer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(3.4rem + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  background: #fffdf8;
+}
+
+.composer input[type="text"],
+.composer input:not([type="file"]) {
+  flex: 1;
+  font: inherit;
+  border: 0;
+  border-bottom: 1px solid #e7e0d6;
+  background: transparent;
+  padding: 0.6rem 0;
+}
+
+button,
+.composer label {
+  font: inherit;
+  color: var(--accent);
+}
+
+.lesson {
+  white-space: pre-wrap;
+}
+
+.notes,
+.days {
+  list-style: none;
+  padding: 0;
+}
+
+img,
+video {
+  max-width: 100%;
+  border-radius: 12px;
+}

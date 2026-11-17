@@ -182,3 +182,16 @@ export async function markStudyDone(id: string) {
   const db = database();
   await db.update(studyItems).set({ done: true }).where(eq(studyItems.id, id));
 }
+
+export async function listDays(): Promise<string[]> {
+  const db = database();
+  const noted = await db.select({ day: fragments.day }).from(fragments);
+  const polished = await db.select({ day: diaryDays.day }).from(diaryDays);
+  return [...new Set([...noted.map((row) => row.day), ...polished.map((row) => row.day)])].sort().reverse();
+}
+
+export async function mediaKey(id: string): Promise<string | null> {
+  const db = database();
+  const [row] = await db.select().from(media).where(eq(media.id, id));
+  return row?.r2Key ?? null;
+}

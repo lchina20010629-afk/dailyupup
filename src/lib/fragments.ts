@@ -19,6 +19,10 @@ export function sortedFragments(items: Fragment[]): Fragment[] {
   return [...items].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
+export function appendFragment(items: Fragment[], item: Fragment): Fragment[] {
+  return sortedFragments([...items, item]);
+}
+
 export function targetImageSize(width: number, height: number, maxEdge = 1600): { width: number; height: number } {
   const longEdge = Math.max(width, height);
   if (longEdge <= maxEdge) return { width, height };
