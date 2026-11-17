@@ -17,7 +17,7 @@
 - 底部三个入口：今天、日记、学习。用 `next/link` 切换，不整页刷新。记一条后列表里马上出现。
 - 媒体不进 Vercel 函数体。浏览器直传 R2。图片上传前最长边压到 1600。单条视频上限 `209715200` 字节（200MB）。桶私有，阅读用短期签名。页面用 `<img>` 和 `<video>`，不用 `next/image`。
 - 模型只在服务器调用 DeepSeek `deepseek-chat`。整理保留用词和细节，补顺句子，按时间排列，不编写没记过的事，不描述画面。
-- 四门分钟数固定：商业 8、英语 8、泰语 8、修养 6。页面写「约 30 分钟」。英语按四级，正文必须含 `改一句：` 和 `搭配：`。泰语正文必须含 `泰文：`、`读音：`、`声调：`、`中文：`。不生成语音，不发推送。
+- 四门分钟数固定：商业 8、英语 8、泰语 8、修养 6。页面写「约 30 分钟」。英语按本人已有的四级水平写口语：正文必须含 `场景：`、`对话：`、`今天说：`，不做成阅读短文或考试题。泰语正文必须含 `泰文：`、`读音：`、`声调：`、`中文：`。不生成语音，不发推送。
 - 英语和泰语只有上一份已勾选才把进度加一。商业和修养勾完才换新的，没勾完就原样带到下一天。第一次打开、当天没有课时，立刻生成当天四门。
 - 当天整理稿写成之后，原文不能再改、不能再删。整理稿不因事后改原文而重写。没有文字的照片写成「这个时间加了一张照片」，视频写成「这个时间加了一段视频」。
 - 登录密码放在 `APP_PASSWORD`，比较前两边都做 SHA-256，再用 `timingSafeEqual`。会话 cookie 名 `dr_session`，HttpOnly，SameSite=Lax，30 天。
@@ -497,12 +497,12 @@ describe("today and lesson shape", () => {
       ["cultivation", 6, null],
     ]);
     expect(ensureToday({ today: "2026-11-18", existing: [item({ subject: "english", done: false })], cursors: initialCursors() })).toBeNull();
-    expect(lessonIsUsable("english", "短文\n改一句：x\n搭配：y")).toBe(true);
-    expect(lessonIsUsable("english", "只有短文")).toBe(false);
+    expect(lessonIsUsable("english", "场景：请假\n对话：I need to step out this afternoon.\n今天说：我今天会说的一句")).toBe(true);
+    expect(lessonIsUsable("english", "只有一段阅读")).toBe(false);
     expect(lessonIsUsable("thai", "泰文：ก\n读音：ko\n声调：中\n中文：鸡")).toBe(true);
     expect(lessonIsUsable("thai", "泰文：ก")).toBe(false);
     expect(fallbackLesson("thai")).toBe("今晚这门没写成，明天会再写。");
-    expect(buildLessonMessages({ subject: "english", minutes: 8, title: "", body: "", unit: 2, carryId: null }, { english: 1, thai: 0 })[0].content).toContain("大学英语四级");
+    expect(buildLessonMessages({ subject: "english", minutes: 8, title: "", body: "", unit: 2, carryId: null }, { english: 1, thai: 0 })[0].content).toContain("日常使用");
     expect(buildLessonMessages({ subject: "thai", minutes: 8, title: "", body: "", unit: 1, carryId: null }, initialCursors())[0].content).toContain("字母和读音");
   });
 });
@@ -520,9 +520,9 @@ Expected: FAIL，模块不存在
 
 `tomorrowsPlan` 的 `items` 顺序同上。英语或泰语未完成：复制 `title`、`body`、`unit`，`carryId` 为当天条目的 `id`，进度不变。已完成：`unit` 为当天 `unit + 1`，`body` 和 `title` 为空，`carryId` 为 `null`，进度设为当天的 `unit`。商业和修养未完成时同样复制；完成时 `body` 和 `title` 为空，`carryId` 为 `null`，`unit` 为 `null`。当天缺少某门时，按「未学过」生成一条新的空正文，英语和泰语单元为进度加一，进度不变。
 
-`needsModel` 为 `carryId === null`。`lessonIsUsable`：英语必须同时含 `改一句：` 和 `搭配：`；泰语必须同时含 `泰文：`、`读音：`、`声调：`、`中文：`；商业和修养的正文去掉空白后至少 20 个字符。`fallbackLesson` 对四门都返回 `今晚这门没写成，明天会再写。`
+`needsModel` 为 `carryId === null`。`lessonIsUsable`：英语必须同时含 `场景：`、`对话：`、`今天说：`；泰语必须同时含 `泰文：`、`读音：`、`声调：`、`中文：`；商业和修养的正文去掉空白后至少 20 个字符。`fallbackLesson` 对四门都返回 `今晚这门没写成，明天会再写。`
 
-`buildLessonMessages` 的系统提示按科目写死要求：商业是一个概念、三到五行；英语是大学英语四级、一篇短文，并要求正文包含 `改一句：` 和 `搭配：`；泰语从字母和读音开始、单元号连续，并要求四个标记；修养是一个职场里用得上的做法。用户消息写明单元号和分钟数。
+`buildLessonMessages` 的系统提示按科目写死要求：商业是一个概念、三到五行；英语写明本人已有四级水平，以口语和日常使用为主，可以比四级课本更深，并要求正文包含 `场景：`、`对话：`、`今天说：`，且包含「日常使用」四字，不要求阅读短文；泰语从字母和读音开始、单元号连续，并要求四个标记；修养是一个职场里用得上的做法。用户消息写明单元号和分钟数。
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -612,7 +612,7 @@ describe("nightly order", () => {
       chat: async (messages) => {
         calls.push(messages[0].content.slice(0, 12));
         if (messages[0].content.includes("字母和读音")) return "太短";
-        if (messages[0].content.includes("大学英语四级")) return "短文\n改一句：a\n搭配：b";
+        if (messages[0].content.includes("日常使用")) return "场景：请假\n对话：I need to step out.\n今天说：我今天会说的一句";
         return "这是一段足够长的新课文，用来填满二十个字。";
       },
     });
@@ -686,7 +686,7 @@ describe("mappers", () => {
     expect(diary.fragments[0].body).toBe("晨跑");
     expect(diary.fragments[0].media[0].kind).toBe("photo");
     expect(toStudyItem({
-      id: "e", day: "2026-11-18", subject: "english", minutes: 8, title: "四级", body: "正文", done: false, unit: 1,
+      id: "e", day: "2026-11-18", subject: "english", minutes: 8, title: "请假", body: "场景：请假\n对话：I need to step out.\n今天说：一句", done: false, unit: 1,
     }).subject).toBe("english");
     expect(toCursors([{ subject: "english", unit: 2 }, { subject: "thai", unit: 0 }])).toEqual({ english: 2, thai: 0 });
   });
@@ -840,7 +840,7 @@ describe("shell", () => {
       <StudyList
         items={[
           { id: "b", day: "2026-11-18", subject: "business", minutes: 8, title: "定价", body: "三行概念", done: false, unit: null },
-          { id: "e", day: "2026-11-18", subject: "english", minutes: 8, title: "短文", body: "改一句：a\n搭配：b", done: false, unit: 1 },
+          { id: "e", day: "2026-11-18", subject: "english", minutes: 8, title: "请假", body: "场景：请假\n对话：I need to step out.\n今天说：一句", done: false, unit: 1 },
           { id: "t", day: "2026-11-18", subject: "thai", minutes: 8, title: "字母", body: "泰文：ก\n读音：ko\n声调：中\n中文：鸡", done: false, unit: 1 },
           { id: "c", day: "2026-11-18", subject: "cultivation", minutes: 6, title: "倾听", body: "一个做法", done: false, unit: null },
         ]}
@@ -852,7 +852,7 @@ describe("shell", () => {
     expect(screen.getByText("泰语 · 8 分钟")).toBeTruthy();
     expect(screen.getByText("修养 · 6 分钟")).toBeTruthy();
     expect(screen.getByRole("checkbox", { name: "读完" })).toBeTruthy();
-    expect(screen.getByRole("checkbox", { name: "做完" })).toBeTruthy();
+    expect(screen.getByRole("checkbox", { name: "说完" })).toBeTruthy();
     expect(screen.getByRole("checkbox", { name: "跟读" })).toBeTruthy();
     expect(screen.getByRole("checkbox", { name: "记住" })).toBeTruthy();
   });
@@ -875,7 +875,7 @@ Expected: FAIL，组件或 `@testing-library/react` 不存在
 
 - [ ] **Step 3: 实现外壳、三页和清单**
 
-安装 `@testing-library/react` 和 `jsdom` 的当前稳定版。`vitest.config.ts` 对 `tests/**/*.tsx` 使用 `jsdom`。`appendFragment` 返回按 `createdAt` 升序的新数组。`TabBar` 固定在底部，三个 `next/link`。`StudyList` 按商业、英语、泰语、修养显示分钟标题；勾选的可访问名称依次是「读完」「做完」「跟读」「记住」。学习页在当天没有课时调用 `ensureToday` 并保存。日记详情页在 `polishedBody === null` 时显示 `PENDING_POLISH`，其下渲染原文和媒体，不渲染四门课文。今天页的输入条固定在底部；图片先按 `targetImageSize` 缩小再上传，视频超过 `VIDEO_MAX_BYTES` 时在页面上说明而不上传。提交时先 `appendFragment` 再请求接口。`InstallHint` 在 `showInstallHint` 为真时说明 Safari「添加到主屏幕」，关掉后把 `dr-install-dismissed` 写入 `localStorage`。`buildManifest` 的图标指向 `/icons/192` 和 `/icons/512`。根布局使用浅色背景和一种强调色，安全区内边距留给底部导航。缺环境变量时，登录页列出 `missingEnv` 的结果，不渲染空白。
+安装 `@testing-library/react` 和 `jsdom` 的当前稳定版。`vitest.config.ts` 对 `tests/**/*.tsx` 使用 `jsdom`。`appendFragment` 返回按 `createdAt` 升序的新数组。`TabBar` 固定在底部，三个 `next/link`。`StudyList` 按商业、英语、泰语、修养显示分钟标题；勾选的可访问名称依次是「读完」「说完」「跟读」「记住」。学习页在当天没有课时调用 `ensureToday` 并保存。日记详情页在 `polishedBody === null` 时显示 `PENDING_POLISH`，其下渲染原文和媒体，不渲染四门课文。今天页的输入条固定在底部；图片先按 `targetImageSize` 缩小再上传，视频超过 `VIDEO_MAX_BYTES` 时在页面上说明而不上传。提交时先 `appendFragment` 再请求接口。`InstallHint` 在 `showInstallHint` 为真时说明 Safari「添加到主屏幕」，关掉后把 `dr-install-dismissed` 写入 `localStorage`。`buildManifest` 的图标指向 `/icons/192` 和 `/icons/512`。根布局使用浅色背景和一种强调色，安全区内边距留给底部导航。缺环境变量时，登录页列出 `missingEnv` 的结果，不渲染空白。
 
 - [ ] **Step 4: Run test to verify it passes**
 
