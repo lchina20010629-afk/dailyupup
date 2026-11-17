@@ -14,7 +14,10 @@ import { addShanghaiDays, shanghaiDate } from "./time";
 
 export type NightlyDeps = {
   now: Date;
-  loadUnpolished: (oldestDay: string, today: string) => Promise<{ day: string; fragments: Fragment[] }[]>;
+  loadUnpolished: (
+    oldestDay: string,
+    today: string,
+  ) => Promise<({ day: string; fragments: Fragment[] } | Fragment)[]>;
   savePolish: (day: string, body: string, polishedAt: string) => Promise<void>;
   loadStudy: (day: string) => Promise<StudyItem[]>;
   loadCursors: () => Promise<Cursors>;
