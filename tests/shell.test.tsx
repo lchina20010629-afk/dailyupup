@@ -6,6 +6,7 @@ import { showInstallHint } from "../src/lib/installHint";
 import { buildManifest } from "../src/lib/manifest";
 import { TabBar } from "../src/components/TabBar";
 import { StudyList } from "../src/components/StudyList";
+import { Composer } from "../src/components/Composer";
 
 describe("shell", () => {
   it("offers three client links, a standalone manifest, and the 30-minute lessons", () => {
@@ -49,5 +50,15 @@ describe("shell", () => {
       { id: "b", day: "2026-11-18", createdAt: "2026-11-18T01:00:00.000Z", body: "先", media: [] },
     );
     expect(next.map((item) => item.id)).toEqual(["b", "a"]);
+  });
+
+  it("lets today's note be edited or deleted before the night polish", () => {
+    render(
+      <Composer
+        initial={[{ id: "a", day: "2026-11-18", createdAt: "2026-11-18T01:00:00.000Z", body: "晨跑", media: [] }]}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "改" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "删" })).toBeTruthy();
   });
 });

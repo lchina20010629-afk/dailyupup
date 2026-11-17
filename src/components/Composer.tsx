@@ -11,6 +11,35 @@ export function Composer({ initial }: { initial: Fragment[] }) {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
+  async function edit(item: Fragment) {
+    const next = window.prompt("改这条", item.body);
+    if (next === null || next === item.body) return;
+    setItems((current) => current.map((entry) => (entry.id === item.id ? { ...entry, body: next } : entry)));
+    if (item.id.startsWith("local-")) return;
+    const response = await fetch(`/api/fragments/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: next }),
+    });
+    if (!response.ok) {
+      setItems((current) => current.map((entry) => (entry.id === item.id ? item : entry)));
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      setError(payload?.error ?? "没有改成");
+    }
+  }
+
+  async function remove(id: string) {
+    const previous = items;
+    setItems((current) => current.filter((item) => item.id !== id));
+    if (id.startsWith("local-")) return;
+    const response = await fetch(`/api/fragments/${id}`, { method: "DELETE" });
+    if (!response.ok) {
+      setItems(previous);
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      setError(payload?.error ?? "没有删掉");
+    }
+  }
+
   async function save(file?: File) {
     setError("");
     let upload: { kind: MediaKind; contentType: string; byteSize: number; blob: Blob } | null = null;
@@ -75,6 +104,12 @@ export function Composer({ initial }: { initial: Fragment[] }) {
             {item.media.map((file) => (
               <span key={file.id}>{file.kind === "photo" ? "照片" : "视频"}</span>
             ))}
+            <button type="button" onClick={() => edit(item)}>
+              改
+            </button>
+            <button type="button" onClick={() => remove(item.id)}>
+              删
+            </button>
           </li>
         ))}
       </ol>
