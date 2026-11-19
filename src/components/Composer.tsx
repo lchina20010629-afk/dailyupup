@@ -4,11 +4,10 @@ import AddIcon from "@mui/icons-material/Add";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import MicNoneIcon from "@mui/icons-material/MicNone";
 import MoodOutlinedIcon from "@mui/icons-material/MoodOutlined";
+import SendRoundedIcon from "@mui/icons-material/SendRounded";
 import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
-import IconButton from "@mui/material/IconButton";
-import TextField from "@mui/material/TextField";
+import TextareaAutosize from "@mui/material/TextareaAutosize";
 import Typography from "@mui/material/Typography";
 import { useEffect, useRef, useState } from "react";
 import type { Ask, Fragment, MediaKind } from "@/domain/types";
@@ -24,7 +23,8 @@ type PendingFile = {
   preview?: string;
 };
 
-const STICKERS = ["😊", "😂", "❤️", "👍", "🙏", "🌟", "☀️", "🌙", "☕️", "📚", "✨", "💪", "(^_^)", "(￣▽￣)", "(>_<)", "(・ω・)", "(ノ´∀｀*)", "(*^▽^*)"];
+const FACES = ["😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😉", "😊", "😋", "😎", "😍", "😘", "🥰", "😗", "😙", "😚", "🙂", "🤗", "🤩", "🤔", "😐", "😑", "😶", "🙄", "😏", "😣", "😥", "😮", "🤐", "😯", "😪", "😫", "😴", "😌", "😛", "😜", "😝", "🤤", "😒", "😓", "😔", "😕", "🙃", "😲", "☹️", "🙁", "😖", "😞", "😟", "😤", "😢", "😭", "😦", "😧", "😨", "😩", "🤯", "😬", "😰", "😱", "😳", "🤪", "😵", "😡", "😠", "🤬", "😷", "🤒", "🤕", "🤢", "😇", "🥳", "🥺", "🤠", "🤡", "🤥", "🤫", "🤭", "🧐", "🤓", "😈", "💀", "👍", "👎", "👏", "🙏", "💪", "✌️", "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "💔", "✨", "🌟", "☀️", "🌙", "⭐", "🔥", "💯", "☕️", "📚", "🎉"];
+const KAOMOJI = ["(^_^)", "(￣▽￣)", "(>_<)", "(・ω・)", "(ノ´∀｀*)", "(*^▽^*)"];
 
 type SpeechCtor = new () => {
   lang: string;
@@ -55,6 +55,8 @@ export function Composer({
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [listening, setListening] = useState(false);
+  const [editing, setEditing] = useState<Fragment | null>(null);
+  const [draft, setDraft] = useState("");
   const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -131,9 +133,18 @@ export function Composer({
     setError("");
   }
 
-  async function edit(item: Fragment) {
-    const next = window.prompt("改这条", item.body);
-    if (next === null || next === item.body) return;
+  function openEdit(item: Fragment) {
+    setEditing(item);
+    setDraft(item.body);
+  }
+
+  async function commitEdit() {
+    const item = editing;
+    if (!item) return;
+    const next = draft;
+    if (!next.trim() && item.media.length === 0) return;
+    setEditing(null);
+    if (next === item.body) return;
     setItems((current) => current.map((entry) => (entry.id === item.id ? { ...entry, body: next } : entry)));
     if (item.id.startsWith("local-")) return;
     const response = await fetch(`/api/fragments/${item.id}`, {
@@ -167,6 +178,7 @@ export function Composer({
     setWaiting(true);
     setError("");
     setEmojiOpen(false);
+    setMoreOpen(false);
     const response = await fetch("/api/asks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -226,6 +238,7 @@ export function Composer({
     setText("");
     setAttached([]);
     setEmojiOpen(false);
+    setMoreOpen(false);
     setPending(true);
     setError("");
     const response = await fetch("/api/fragments", {
@@ -324,7 +337,7 @@ export function Composer({
               ) : null}
             </article>
             <div className="bubble-actions">
-              <button type="button" onClick={() => void edit(entry.fragment)}>
+              <button type="button" onClick={() => openEdit(entry.fragment)}>
                 改
               </button>
               <button type="button" onClick={() => void remove(entry.fragment.id)}>
@@ -358,12 +371,50 @@ export function Composer({
             ))}
           </div>
         ) : null}
-        <div className={emojiOpen ? "panel open" : "panel"} role="listbox" aria-label="表情和颜文字">
-          {STICKERS.map((token) => (
-            <Button key={token} type="button" size="small" variant="text" onClick={() => insert(token)}>
+        <div className={emojiOpen ? "picker open" : "picker"} role="listbox" aria-label="表情和颜文字">
+          {FACES.map((token) => (
+            <button key={token} type="button" onClick={() => insert(token)}>
               {token}
-            </Button>
+            </button>
           ))}
+          <div className="kaomoji">
+            {KAOMOJI.map((token) => (
+              <button key={token} type="button" onClick={() => insert(token)}>
+                {token}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={moreOpen ? "attach open" : "attach"}>
+          <label>
+            <ImageOutlinedIcon />
+            发送图片
+            <input
+              aria-label="照片"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) => {
+                void addPhotos(event.target.files);
+                event.target.value = "";
+                setMoreOpen(false);
+              }}
+            />
+          </label>
+          <label>
+            <VideocamOutlinedIcon />
+            发送视频
+            <input
+              aria-label="视频"
+              type="file"
+              accept="video/*"
+              onChange={(event) => {
+                addVideo(event.target.files?.[0]);
+                event.target.value = "";
+                setMoreOpen(false);
+              }}
+            />
+          </label>
         </div>
         <form
           className="composer"
@@ -372,86 +423,110 @@ export function Composer({
             void save();
           }}
         >
-          <Button type="button" size="small" variant={mode === "note" ? "contained" : "text"} aria-pressed={mode === "note"} onClick={() => setMode("note")}>
-            记
-          </Button>
-          <Button type="button" size="small" variant={mode === "ask" ? "contained" : "text"} aria-pressed={mode === "ask"} onClick={() => setMode("ask")}>
-            问
-          </Button>
-          <IconButton type="button" aria-label="语音" aria-pressed={listening} color={listening ? "primary" : "default"} onClick={listen}>
-            <MicNoneIcon fontSize="small" />
-          </IconButton>
-          <TextField
-            inputRef={inputRef}
-            className="composer-input"
-            value={text}
-            size="small"
-            multiline
-            minRows={1}
-            maxRows={4}
-            hiddenLabel
-            onChange={(event) => setText(event.target.value)}
-            placeholder={mode === "ask" ? "问一句…" : "记一笔…"}
-            aria-label={mode === "ask" ? "问一句" : "记一笔"}
-          />
-          <IconButton
-            type="button"
-            aria-label="表情"
-            aria-pressed={emojiOpen}
-            color={emojiOpen ? "primary" : "default"}
-            onClick={() => {
-              setEmojiOpen((open) => !open);
-              setMoreOpen(false);
+          <div className="composer-row">
+            <div className="field">
+              <TextareaAutosize
+                ref={inputRef}
+                className="composer-input"
+                value={text}
+                minRows={1}
+                maxRows={6}
+                onChange={(event) => setText(event.target.value)}
+                placeholder={mode === "ask" ? "问一句…" : "记一笔…"}
+                aria-label={mode === "ask" ? "问一句" : "记一笔"}
+              />
+              <div className="field-tools">
+                <div className="mode">
+                  <button type="button" aria-pressed={mode === "note"} onClick={() => setMode("note")}>
+                    记
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={mode === "ask"}
+                    onClick={() => {
+                      setMode("ask");
+                      setMoreOpen(false);
+                    }}
+                  >
+                    问
+                  </button>
+                </div>
+                {mode === "note" ? (
+                  <button
+                    type="button"
+                    className="tool"
+                    aria-label="更多"
+                    aria-pressed={moreOpen}
+                    onClick={() => {
+                      setMoreOpen((open) => !open);
+                      setEmojiOpen(false);
+                    }}
+                  >
+                    <AddIcon />
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="tool"
+                  aria-label="表情"
+                  aria-pressed={emojiOpen}
+                  onClick={() => {
+                    setEmojiOpen((open) => !open);
+                    setMoreOpen(false);
+                  }}
+                >
+                  <MoodOutlinedIcon />
+                </button>
+                <button type="button" className="tool" aria-label="语音" aria-pressed={listening} onClick={listen}>
+                  <MicNoneIcon />
+                </button>
+                <button type="submit" className="send" aria-label="发送" disabled={!canSend || pending || waiting}>
+                  <SendRoundedIcon />
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      {editing ? (
+        <div
+          className="edit-layer"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setEditing(null);
+          }}
+        >
+          <form
+            className="edit-card"
+            role="dialog"
+            aria-label="改这条"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void commitEdit();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setEditing(null);
             }}
           >
-            <MoodOutlinedIcon fontSize="small" />
-          </IconButton>
-          {canSend ? (
-            <Button type="submit" size="small" variant="contained" disabled={pending || waiting} sx={{ minWidth: 56, borderRadius: 20 }}>
-              发送
-            </Button>
-          ) : mode === "note" ? (
-            <IconButton
-              type="button"
-              aria-label="更多"
-              aria-pressed={moreOpen}
-              onClick={() => {
-                setMoreOpen((open) => !open);
-                setEmojiOpen(false);
-              }}
-            >
-              <AddIcon fontSize="small" />
-            </IconButton>
-          ) : null}
-        </form>
-        <div className={mode === "note" && (moreOpen || attached.length > 0) ? "panel open tools" : "panel tools"}>
-          <label>
-            <ImageOutlinedIcon />
-            照片
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(event) => {
-                void addPhotos(event.target.files);
-                event.target.value = "";
-              }}
+            <TextareaAutosize
+              className="composer-input edit-input"
+              value={draft}
+              minRows={3}
+              maxRows={8}
+              autoFocus
+              aria-label="修改内容"
+              onChange={(event) => setDraft(event.target.value)}
             />
-          </label>
-          <label>
-            <VideocamOutlinedIcon />
-            视频
-            <input
-              type="file"
-              accept="video/*"
-              onChange={(event) => {
-                addVideo(event.target.files?.[0]);
-                event.target.value = "";
-              }}
-            />
-          </label>
+            <div className="edit-actions">
+              <button type="button" onClick={() => setEditing(null)}>
+                取消
+              </button>
+              <button type="submit" className="edit-save">
+                保存
+              </button>
+            </div>
+          </form>
         </div>
-      </div>
+      ) : null}
     </>
   );
 }

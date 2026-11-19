@@ -171,6 +171,7 @@ body:has(.chat) {
   white-space: pre-wrap;
   line-height: 1.45;
   font-size: 14px;
+  word-break: break-word;
 }
 
 .bubble-actions button {
@@ -201,65 +202,301 @@ body:has(.chat) {
   display: block;
 }
 
-.dock {
+.edit-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--mui-palette-text-primary) 28%, transparent);
+}
+
+.edit-card {
+  width: min(32rem, 100%);
+  padding: 12px 12px 10px;
+  border-radius: 22px;
   background: var(--mui-palette-background-paper);
-  border-top: 1px solid var(--mui-palette-divider);
-  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--mui-palette-text-primary) 18%, transparent);
+}
+
+.edit-input {
+  max-height: 220px;
+  padding: 8px 4px;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.edit-actions button {
+  height: 36px;
+  border: 0;
+  border-radius: 18px;
+  padding: 0 14px;
+  background: transparent;
+  color: var(--mui-palette-text-secondary);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.edit-actions .edit-save {
+  background: var(--mui-palette-primary-main);
+  color: var(--mui-palette-primary-contrastText);
+}
+
+.dock {
+  position: relative;
+  background: transparent;
+  padding: 6px 12px calc(10px + env(safe-area-inset-bottom));
 }
 
 .composer {
   display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  padding: 4px 6px;
+  flex-direction: column;
+  align-items: stretch;
 }
 
-.composer-input .MuiOutlinedInput-root {
-  border-radius: 18px;
-  background: var(--mui-palette-background-default);
-}
-
-.panel {
+.mode {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  height: 0;
-  overflow: hidden;
-  padding: 0 8px;
+  align-items: center;
+  width: fit-content;
+  height: 28px;
+  margin-right: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mui-palette-text-primary) 7%, transparent);
 }
 
-.panel.open {
-  height: auto;
-  padding: 8px;
-}
-
-.panel.tools {
-  gap: 16px;
-}
-
-.panel.tools label {
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-  width: 64px;
+.mode button {
+  border: 0;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: transparent;
   color: var(--mui-palette-text-secondary);
+  font: inherit;
   font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.panel.tools svg {
-  width: 48px;
-  height: 48px;
-  padding: 10px;
-  box-sizing: border-box;
-  border-radius: 12px;
-  background: var(--mui-palette-background-default);
+.mode button[aria-pressed="true"] {
+  background: var(--mui-palette-background-paper);
+  color: var(--mui-palette-text-primary);
+}
+
+.composer-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 8px 6px 12px;
+  border-radius: 22px;
+  background: var(--mui-palette-background-paper);
+  border: 1px solid color-mix(in srgb, var(--mui-palette-text-primary) 12%, transparent);
+}
+
+.field:focus-within {
+  border-color: color-mix(in srgb, var(--mui-palette-primary-main) 55%, transparent);
+}
+
+.field-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 36px;
+}
+
+.tool {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+  color: var(--mui-palette-text-secondary);
+  cursor: pointer;
+}
+
+.tool[aria-pressed="true"] {
+  color: var(--mui-palette-primary-main);
+}
+
+.tool svg {
+  width: 22px;
+  height: 22px;
 }
 
 .composer-input {
-  flex: 1;
+  width: 100%;
+  min-width: 0;
+  resize: none;
+  overflow-y: auto;
+  border: 0;
+  margin: 0;
+  padding: 2px 2px 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--mui-palette-text-primary);
+  font: inherit;
+  font-size: 15px;
+  line-height: 22px;
+  max-height: 132px;
+  box-sizing: border-box;
 }
 
-.panel input[type="file"],
+.composer-input:focus {
+  outline: none;
+}
+
+.composer-input::placeholder {
+  color: color-mix(in srgb, var(--mui-palette-text-secondary) 80%, transparent);
+}
+
+.send {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  margin: 0 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: var(--mui-palette-background-paper);
+  color: color-mix(in srgb, var(--mui-palette-text-primary) 38%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--mui-palette-text-primary) 10%, transparent);
+  cursor: pointer;
+}
+
+.send svg {
+  width: 20px;
+  height: 20px;
+  margin-left: 1px;
+  transform: rotate(-28deg);
+}
+
+.send:not(:disabled) {
+  background: var(--mui-palette-primary-main);
+  color: var(--mui-palette-primary-contrastText);
+  box-shadow: none;
+}
+
+.send:disabled {
+  cursor: default;
+}
+
+.picker,
+.attach {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.picker.open,
+.attach.open {
+  position: absolute;
+  z-index: 5;
+  left: 12px;
+  bottom: calc(100% - 2px);
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: auto;
+  clip: auto;
+  white-space: normal;
+  border-radius: 16px;
+  background: var(--mui-palette-background-paper);
+  box-shadow:
+    0 12px 32px color-mix(in srgb, var(--mui-palette-text-primary) 16%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--mui-palette-text-primary) 8%, transparent);
+}
+
+.picker.open {
+  right: 64px;
+  max-height: 248px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  padding: 8px;
+}
+
+.picker.open button {
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.picker.open .kaomoji {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.picker.open .kaomoji button {
+  width: auto;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 13px;
+  color: var(--mui-palette-text-primary);
+}
+
+.attach.open {
+  min-width: 168px;
+  display: grid;
+  padding: 6px;
+  overflow: visible;
+}
+
+.attach.open label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: var(--mui-palette-text-primary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.attach.open label:hover {
+  background: color-mix(in srgb, var(--mui-palette-text-primary) 6%, transparent);
+}
+
+.attach.open svg {
+  width: 20px;
+  height: 20px;
+  color: var(--mui-palette-text-secondary);
+}
+
+.attach input[type="file"],
 .composer input[type="file"] {
   position: absolute;
   width: 1px;
