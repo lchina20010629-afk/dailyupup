@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { hasSession } from "@/lib/requestAuth";
 import { markStudyDone } from "@/db/repository";
 
-export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  if (!hasSession(request)) return NextResponse.json({ error: "未登录" }, { status: 401 });
+export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   try {
     await markStudyDone(id);

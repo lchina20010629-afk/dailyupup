@@ -16,6 +16,15 @@ export const media = pgTable("media", {
   byteSize: integer("byte_size").notNull(),
 });
 
+export const asks = pgTable("asks", {
+  id: text("id").primaryKey(),
+  day: text("day").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  fragmentId: text("fragment_id"),
+});
+
 export const diaryDays = pgTable("diary_days", {
   day: text("day").primaryKey(),
   polishedBody: text("polished_body"),

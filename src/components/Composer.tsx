@@ -1,15 +1,135 @@
 "use client";
 
-import { useState } from "react";
-import type { Fragment, MediaKind } from "@/domain/types";
+import AddIcon from "@mui/icons-material/Add";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import MicNoneIcon from "@mui/icons-material/MicNone";
+import MoodOutlinedIcon from "@mui/icons-material/MoodOutlined";
+import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
+import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
+import TextField from "@mui/material/TextField";
+import Typography from "@mui/material/Typography";
+import { useEffect, useRef, useState } from "react";
+import type { Ask, Fragment, MediaKind } from "@/domain/types";
+import { threadItems } from "@/lib/asks";
 import { appendFragment, targetImageSize, VIDEO_MAX_BYTES } from "@/lib/fragments";
 import { shanghaiClock } from "@/lib/time";
 
-export function Composer({ initial }: { initial: Fragment[] }) {
+type PendingFile = {
+  id: string;
+  kind: MediaKind;
+  contentType: string;
+  blob: Blob;
+  preview?: string;
+};
+
+const STICKERS = ["😊", "😂", "❤️", "👍", "🙏", "🌟", "☀️", "🌙", "☕️", "📚", "✨", "💪", "(^_^)", "(￣▽￣)", "(>_<)", "(・ω・)", "(ノ´∀｀*)", "(*^▽^*)"];
+
+type SpeechCtor = new () => {
+  lang: string;
+  interimResults: boolean;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+};
+
+export function Composer({
+  initial,
+  asks: initialAsks = [],
+  urls = {},
+}: {
+  initial: Fragment[];
+  asks?: Ask[];
+  urls?: Record<string, string>;
+}) {
   const [items, setItems] = useState(initial);
+  const [asks, setAsks] = useState(initialAsks);
+  const [mode, setMode] = useState<"note" | "ask">("note");
+  const [waiting, setWaiting] = useState(false);
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [attached, setAttached] = useState<PendingFile[]>([]);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
+  const canSend = mode === "ask" ? text.trim().length > 0 : text.trim().length > 0 || attached.length > 0;
+  const thread = threadItems(items, asks);
+
+  useEffect(() => {
+    const node = threadRef.current;
+    if (node) node.scrollTop = node.scrollHeight;
+  }, [thread.length, attached.length, waiting]);
+
+  function insert(token: string) {
+    const field = inputRef.current;
+    const start = field?.selectionStart ?? text.length;
+    const end = field?.selectionEnd ?? text.length;
+    const next = `${text.slice(0, start)}${token}${text.slice(end)}`;
+    setText(next);
+    requestAnimationFrame(() => {
+      field?.focus();
+      const caret = start + token.length;
+      field?.setSelectionRange(caret, caret);
+    });
+  }
+
+  function listen() {
+    const host = window as Window & { SpeechRecognition?: SpeechCtor; webkitSpeechRecognition?: SpeechCtor };
+    const Ctor = host.SpeechRecognition ?? host.webkitSpeechRecognition;
+    if (!Ctor) {
+      setError("这台设备不能直接听写，用键盘上的麦克风即可。");
+      inputRef.current?.focus();
+      return;
+    }
+    const recognition = new Ctor();
+    recognition.lang = "zh-CN";
+    recognition.interimResults = false;
+    recognition.onresult = (event) => {
+      const said = event.results[0]?.[0]?.transcript ?? "";
+      if (said) insert(said);
+    };
+    recognition.onerror = () => setError("没有听清，用键盘上的麦克风即可。");
+    recognition.onend = () => setListening(false);
+    setListening(true);
+    setError("");
+    recognition.start();
+  }
+
+  async function addPhotos(list: FileList | null) {
+    if (!list?.length) return;
+    const next: PendingFile[] = [];
+    for (const file of Array.from(list)) {
+      const blob = await compressImage(file);
+      next.push({
+        id: `local-${crypto.randomUUID()}`,
+        kind: "photo",
+        contentType: "image/jpeg",
+        blob,
+        preview: URL.createObjectURL(blob),
+      });
+    }
+    setAttached((current) => [...current, ...next]);
+    setError("");
+  }
+
+  function addVideo(file?: File) {
+    if (!file) return;
+    if (file.size > VIDEO_MAX_BYTES) {
+      setError("这条视频超过 200MB，没有上传。");
+      return;
+    }
+    setAttached((current) => [
+      ...current,
+      { id: `local-${crypto.randomUUID()}`, kind: "video", contentType: file.type || "video/mp4", blob: file },
+    ]);
+    setError("");
+  }
 
   async function edit(item: Fragment) {
     const next = window.prompt("改这条", item.body);
@@ -40,39 +160,80 @@ export function Composer({ initial }: { initial: Fragment[] }) {
     }
   }
 
-  async function save(file?: File) {
+  async function askQuestion() {
+    const question = text.trim();
+    if (!question) return;
+    setText("");
+    setWaiting(true);
     setError("");
-    let upload: { kind: MediaKind; contentType: string; byteSize: number; blob: Blob } | null = null;
-    if (file) {
-      if (file.type.startsWith("video/")) {
-        if (file.size > VIDEO_MAX_BYTES) {
-          setError("这条视频超过 200MB，没有上传。");
-          return;
-        }
-        upload = { kind: "video", contentType: file.type, byteSize: file.size, blob: file };
-      } else {
-        const blob = await compressImage(file);
-        upload = { kind: "photo", contentType: "image/jpeg", byteSize: blob.size, blob };
-      }
+    setEmojiOpen(false);
+    const response = await fetch("/api/asks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    const payload = (await response.json().catch(() => null)) as { ask?: Ask; error?: string } | null;
+    setWaiting(false);
+    if (!response.ok || !payload?.ask) {
+      setText(question);
+      setError(payload?.error ?? "没问成，再试一次。");
+      return;
+    }
+    setAsks((current) => [...current, payload.ask!]);
+  }
+
+  async function keep(item: Ask) {
+    const response = await fetch(`/api/asks/${item.id}`, { method: "POST" });
+    const payload = (await response.json().catch(() => null)) as { ask?: Ask; error?: string } | null;
+    if (!response.ok || !payload?.ask) {
+      setError(payload?.error ?? "没有记下");
+      return;
+    }
+    setAsks((current) => current.map((entry) => (entry.id === item.id ? payload.ask! : entry)));
+  }
+
+  async function removeAsk(id: string) {
+    const previous = asks;
+    setAsks((current) => current.filter((item) => item.id !== id));
+    const response = await fetch(`/api/asks/${id}`, { method: "DELETE" });
+    if (!response.ok) {
+      setAsks(previous);
+      const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+      setError(payload?.error ?? "没有删掉");
+    }
+  }
+
+  async function save() {
+    if (mode === "ask") {
+      await askQuestion();
+      return;
     }
     const body = text.trim();
-    if (!body && !upload) return;
+    const files = attached;
+    if (!body && files.length === 0) return;
     const optimistic: Fragment = {
       id: `local-${Date.now()}`,
       day: "",
       createdAt: new Date().toISOString(),
       body,
-      media: upload ? [{ id: "local-media", kind: upload.kind, byteSize: upload.byteSize }] : [],
+      media: files.map((file) => ({ id: file.id, kind: file.kind, byteSize: file.blob.size })),
     };
+    setLocalUrls((current) => ({
+      ...current,
+      ...Object.fromEntries(files.flatMap((file) => (file.preview ? [[file.id, file.preview]] : []))),
+    }));
     setItems((current) => appendFragment(current, optimistic));
     setText("");
+    setAttached([]);
+    setEmojiOpen(false);
     setPending(true);
+    setError("");
     const response = await fetch("/api/fragments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         body,
-        media: upload ? [{ kind: upload.kind, contentType: upload.contentType, byteSize: upload.byteSize }] : [],
+        media: files.map((file) => ({ kind: file.kind, contentType: file.contentType, byteSize: file.blob.size })),
       }),
     });
     const payload = (await response.json()) as {
@@ -82,76 +243,215 @@ export function Composer({ initial }: { initial: Fragment[] }) {
     };
     if (!response.ok || !payload.fragment) {
       setItems((current) => current.filter((item) => item.id !== optimistic.id));
+      setAttached(files);
+      setText(body);
       setError(payload.error ?? "没有记下");
       setPending(false);
       return;
     }
-    const target = payload.uploads?.[0];
-    if (target && upload) {
-      await fetch(target.url, { method: "PUT", headers: { "Content-Type": upload.contentType }, body: upload.blob });
-    }
+    const uploaded = await Promise.all(
+      (payload.uploads ?? []).map((upload, index) => {
+        const file = files[index];
+        if (!file) return Promise.resolve(null);
+        return fetch(upload.url, { method: "PUT", headers: { "Content-Type": file.contentType }, body: file.blob });
+      }),
+    );
+    if (uploaded.some((result) => result && !result.ok)) setError("文件没有传上去。");
+    setLocalUrls((current) => {
+      const next = { ...current };
+      payload.fragment?.media.forEach((file, index) => {
+        const preview = files[index]?.preview;
+        if (preview) next[file.id] = preview;
+      });
+      return next;
+    });
     setItems((current) => current.map((item) => (item.id === optimistic.id ? payload.fragment! : item)));
     setPending(false);
   }
 
   return (
     <>
-      <ol className="notes">
-        {items.map((item) => (
-          <li key={item.id}>
-            <time>{item.createdAt ? shanghaiClock(new Date(item.createdAt)) : ""}</time>
-            {item.body ? <p>{item.body}</p> : null}
-            {item.media.map((file) => (
-              <span key={file.id}>{file.kind === "photo" ? "照片" : "视频"}</span>
+      <div className="thread" ref={threadRef} role="log" aria-label="今天的对话">
+        <div className="thread-spacer" />
+        {thread.length === 0 && !waiting ? (
+          <Typography className="empty" variant="body2" color="text.secondary">
+            记一条，或拨到「问」。夜里 11 点这一小时会收成日记。
+          </Typography>
+        ) : null}
+        {thread.map((entry) =>
+          entry.kind === "ask" ? (
+            <div key={entry.ask.id}>
+              <div className="msg">
+                <time className="stamp">{shanghaiClock(new Date(entry.ask.createdAt))}</time>
+                <article className="bubble">
+                  <p>{entry.ask.question}</p>
+                </article>
+                <div className="bubble-actions">
+                  <button type="button" onClick={() => void removeAsk(entry.ask.id)}>
+                    删
+                  </button>
+                </div>
+              </div>
+              <div className="msg in">
+                <article className="bubble in">
+                  <p>{entry.ask.answer}</p>
+                </article>
+                <div className="bubble-actions">
+                  {entry.ask.fragmentId ? (
+                    <span>已记</span>
+                  ) : (
+                    <button type="button" onClick={() => void keep(entry.ask)}>
+                      记进日记
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+          <div className="msg" key={entry.fragment.id}>
+            <time className="stamp">{entry.fragment.createdAt ? shanghaiClock(new Date(entry.fragment.createdAt)) : ""}</time>
+            <article className="bubble">
+              {entry.fragment.body ? <p>{entry.fragment.body}</p> : null}
+              {entry.fragment.media.length > 0 ? (
+                <div className={entry.fragment.media.length > 1 ? "shots many" : "shots"}>
+                  {entry.fragment.media.map((file) => {
+                    const src = localUrls[file.id] ?? urls[file.id];
+                    if (file.kind === "photo" && src) return <img key={file.id} src={src} alt="" />;
+                    if (file.kind === "video" && src) return <video key={file.id} src={src} controls />;
+                    return <span key={file.id}>{file.kind === "photo" ? "照片" : "视频"}</span>;
+                  })}
+                </div>
+              ) : null}
+            </article>
+            <div className="bubble-actions">
+              <button type="button" onClick={() => void edit(entry.fragment)}>
+                改
+              </button>
+              <button type="button" onClick={() => void remove(entry.fragment.id)}>
+                删
+              </button>
+            </div>
+          </div>
+          ),
+        )}
+        {waiting ? (
+          <div className="msg in">
+            <article className="bubble in">
+              <p>在想…</p>
+            </article>
+          </div>
+        ) : null}
+      </div>
+      <div className="dock">
+        {error ? (
+          <Alert className="error" severity="error" sx={{ py: 0 }}>
+            {error}
+          </Alert>
+        ) : null}
+        {attached.length > 0 ? (
+          <div className="pending-files">
+            {attached.map((file) => (
+              <button key={file.id} type="button" onClick={() => setAttached((current) => current.filter((entry) => entry.id !== file.id))}>
+                {file.preview ? <img src={file.preview} alt="" /> : "视频"}
+                <span>去掉</span>
+              </button>
             ))}
-            <button type="button" onClick={() => edit(item)}>
-              改
-            </button>
-            <button type="button" onClick={() => remove(item.id)}>
-              删
-            </button>
-          </li>
-        ))}
-      </ol>
-      <form
-        className="composer"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void save();
-        }}
-      >
-        <input value={text} onChange={(event) => setText(event.target.value)} placeholder="记一笔…" aria-label="记一笔" />
-        <label>
-          照片
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void save(file);
-              event.target.value = "";
-            }}
+          </div>
+        ) : null}
+        <div className={emojiOpen ? "panel open" : "panel"} role="listbox" aria-label="表情和颜文字">
+          {STICKERS.map((token) => (
+            <Button key={token} type="button" size="small" variant="text" onClick={() => insert(token)}>
+              {token}
+            </Button>
+          ))}
+        </div>
+        <form
+          className="composer"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void save();
+          }}
+        >
+          <Button type="button" size="small" variant={mode === "note" ? "contained" : "text"} aria-pressed={mode === "note"} onClick={() => setMode("note")}>
+            记
+          </Button>
+          <Button type="button" size="small" variant={mode === "ask" ? "contained" : "text"} aria-pressed={mode === "ask"} onClick={() => setMode("ask")}>
+            问
+          </Button>
+          <IconButton type="button" aria-label="语音" aria-pressed={listening} color={listening ? "primary" : "default"} onClick={listen}>
+            <MicNoneIcon fontSize="small" />
+          </IconButton>
+          <TextField
+            inputRef={inputRef}
+            className="composer-input"
+            value={text}
+            size="small"
+            multiline
+            minRows={1}
+            maxRows={4}
+            hiddenLabel
+            onChange={(event) => setText(event.target.value)}
+            placeholder={mode === "ask" ? "问一句…" : "记一笔…"}
+            aria-label={mode === "ask" ? "问一句" : "记一笔"}
           />
-        </label>
-        <label>
-          视频
-          <input
-            type="file"
-            accept="video/*"
-            capture="environment"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void save(file);
-              event.target.value = "";
+          <IconButton
+            type="button"
+            aria-label="表情"
+            aria-pressed={emojiOpen}
+            color={emojiOpen ? "primary" : "default"}
+            onClick={() => {
+              setEmojiOpen((open) => !open);
+              setMoreOpen(false);
             }}
-          />
-        </label>
-        <button type="submit" disabled={pending}>
-          记下
-        </button>
-      </form>
-      {error ? <p className="error">{error}</p> : null}
+          >
+            <MoodOutlinedIcon fontSize="small" />
+          </IconButton>
+          {canSend ? (
+            <Button type="submit" size="small" variant="contained" disabled={pending || waiting} sx={{ minWidth: 56, borderRadius: 20 }}>
+              发送
+            </Button>
+          ) : mode === "note" ? (
+            <IconButton
+              type="button"
+              aria-label="更多"
+              aria-pressed={moreOpen}
+              onClick={() => {
+                setMoreOpen((open) => !open);
+                setEmojiOpen(false);
+              }}
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>
+          ) : null}
+        </form>
+        <div className={mode === "note" && (moreOpen || attached.length > 0) ? "panel open tools" : "panel tools"}>
+          <label>
+            <ImageOutlinedIcon />
+            照片
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(event) => {
+                void addPhotos(event.target.files);
+                event.target.value = "";
+              }}
+            />
+          </label>
+          <label>
+            <VideocamOutlinedIcon />
+            视频
+            <input
+              type="file"
+              accept="video/*"
+              onChange={(event) => {
+                addVideo(event.target.files?.[0]);
+                event.target.value = "";
+              }}
+            />
+          </label>
+        </div>
+      </div>
     </>
   );
 }

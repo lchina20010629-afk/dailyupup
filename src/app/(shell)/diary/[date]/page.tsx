@@ -15,12 +15,15 @@ export default async function DiaryDayPage({ params }: { params: Promise<{ date:
   }
   return (
     <>
-      <h1>{date}</h1>
-      <section>
+      <header className="page-head">
+        <p className="eyebrow">这一天</p>
+        <h1>{date}</h1>
+      </header>
+      <section className="panel">
         <h2>整理</h2>
         {diary?.polishedBody ? <p className="prose">{diary.polishedBody}</p> : <p>{PENDING_POLISH}</p>}
       </section>
-      <section>
+      <section className="panel originals">
         <h2>原文</h2>
         {fragments.map((fragment) => (
           <article key={fragment.id}>

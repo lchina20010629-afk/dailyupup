@@ -36,17 +36,12 @@ export function sessionCookie(token: string, secure: boolean) {
   };
 }
 
-export function pageGate(pathname: string, hasSession: boolean): "allow" | "to-login" | "to-today" {
+export function pageGate(pathname: string, hasSession: boolean): "allow" | "to-login" | "to-today" | "to-study" {
   if (pathname.startsWith("/api/cron") || pathname.startsWith("/api/login")) return "allow";
   if (pathname === "/login") return hasSession ? "to-today" : "allow";
-  const isPrivate =
-    pathname === "/" ||
-    pathname === "/today" ||
-    pathname.startsWith("/diary") ||
-    pathname === "/study" ||
-    pathname.startsWith("/study/");
+  if (pathname === "/") return hasSession ? "to-today" : "to-study";
+  const isPrivate = pathname === "/today" || pathname.startsWith("/diary");
   if (!isPrivate) return "allow";
   if (!hasSession) return "to-login";
-  if (pathname === "/") return "to-today";
   return "allow";
 }

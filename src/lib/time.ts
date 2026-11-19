@@ -16,6 +16,16 @@ export function shanghaiDate(now: Date): string {
   return dateFormat.format(now);
 }
 
+export function shanghaiDayLabel(day: string): string {
+  const [year, month, date] = day.split("-").map(Number);
+  return new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "UTC",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  }).format(new Date(Date.UTC(year, month - 1, date)));
+}
+
 export function shanghaiClock(now: Date): string {
   return clockFormat.format(now);
 }

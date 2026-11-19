@@ -1,5 +1,9 @@
 "use client";
 
+import Button from "@mui/material/Button";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+
 export function LoginForm() {
   return (
     <form
@@ -14,11 +18,12 @@ export function LoginForm() {
         if (response.ok) window.location.assign("/today");
       }}
     >
-      <label>
-        密码
-        <input name="password" type="password" autoComplete="current-password" />
-      </label>
-      <button type="submit">进入</button>
+      <Stack spacing={1.5} sx={{ mt: 2 }}>
+        <TextField name="password" label="密码" type="password" autoComplete="current-password" size="small" />
+        <Button type="submit" variant="contained" sx={{ alignSelf: "flex-start" }}>
+          进入
+        </Button>
+      </Stack>
     </form>
   );
 }

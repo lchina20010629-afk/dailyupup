@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listDays } from "@/db/repository";
 import { missingEnv } from "@/lib/env";
+import { shanghaiDayLabel } from "@/lib/time";
 
 export default async function DiaryIndexPage() {
   const missing = missingEnv(process.env);
@@ -8,12 +9,15 @@ export default async function DiaryIndexPage() {
   const days = await listDays();
   return (
     <>
-      <h1>日记</h1>
-      {days.length === 0 ? <p>还没有记下的一天。</p> : null}
+      <header className="page-head">
+        <p className="eyebrow">整理过的日子</p>
+        <h1>日记</h1>
+      </header>
+      {days.length === 0 ? <p>还没有记下的一天。今天写的，夜里 11 点这一小时会收进来。</p> : null}
       <ul className="days">
         {days.map((day) => (
           <li key={day}>
-            <Link href={`/diary/${day}`}>{day}</Link>
+            <Link href={`/diary/${day}`}>{shanghaiDayLabel(day)}</Link>
           </li>
         ))}
       </ul>

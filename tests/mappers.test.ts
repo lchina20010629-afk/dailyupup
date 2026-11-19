@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toCursors, toDiary, toFragment, toStudyItem } from "../src/db/mappers";
+import { toAsk, toCursors, toDiary, toFragment, toStudyItem } from "../src/db/mappers";
 
 describe("mappers", () => {
   it("keeps polished text attached to the original fragments", () => {
@@ -26,5 +26,18 @@ describe("mappers", () => {
       unit: 1,
     }).subject).toBe("english");
     expect(toCursors([{ subject: "english", unit: 2 }, { subject: "thai", unit: 0 }])).toEqual({ english: 2, thai: 0 });
+  });
+
+  it("maps an ask fragment id from either column name", () => {
+    const row = {
+      id: "a",
+      day: "2026-11-18",
+      createdAt: new Date("2026-11-18T04:00:00.000Z"),
+      question: "面汤怎么少放盐",
+      answer: "少放盐",
+    };
+    expect(toAsk({ ...row, fragmentId: null }).fragmentId).toBeNull();
+    expect(toAsk({ ...row, fragment_id: null }).fragmentId).toBeNull();
+    expect(toAsk({ ...row, fragment_id: "f1" }).fragmentId).toBe("f1");
   });
 });

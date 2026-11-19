@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 export const metadata = {
@@ -9,7 +10,9 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="zh-CN">
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

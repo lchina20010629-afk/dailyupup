@@ -28,7 +28,9 @@ describe("session gate", () => {
   it("sends private pages to login and logged-in visitors away from login", () => {
     expect(pageGate("/today", false)).toBe("to-login");
     expect(pageGate("/diary/2026-11-18", false)).toBe("to-login");
-    expect(pageGate("/study", false)).toBe("to-login");
+    expect(pageGate("/study", false)).toBe("allow");
+    expect(pageGate("/study/english", false)).toBe("allow");
+    expect(pageGate("/", false)).toBe("to-study");
     expect(pageGate("/login", false)).toBe("allow");
     expect(pageGate("/login", true)).toBe("to-today");
     expect(pageGate("/today", true)).toBe("allow");

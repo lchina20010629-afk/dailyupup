@@ -1,4 +1,4 @@
-import type { DiaryDay, Fragment, MediaKind } from "../domain/types";
+import type { Ask, DiaryDay, Fragment, MediaKind } from "../domain/types";
 import type { Cursors, StudyItem, Subject } from "../lib/study";
 
 export function toFragment(
@@ -38,6 +38,26 @@ export function toStudyItem(row: {
   unit: number | null;
 }): StudyItem {
   return { ...row };
+}
+
+export function toAsk(row: {
+  id: string;
+  day: string;
+  createdAt: Date;
+  question: string;
+  answer: string;
+  fragmentId?: string | null;
+  fragment_id?: string | null;
+}): Ask {
+  const fragmentId = Object.prototype.hasOwnProperty.call(row, "fragmentId") ? row.fragmentId : row.fragment_id;
+  return {
+    id: row.id,
+    day: row.day,
+    createdAt: row.createdAt.toISOString(),
+    question: row.question,
+    answer: row.answer,
+    fragmentId: fragmentId ?? null,
+  };
 }
 
 export function toCursors(rows: { subject: string; unit: number }[]): Cursors {

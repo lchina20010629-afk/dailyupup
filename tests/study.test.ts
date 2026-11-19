@@ -63,10 +63,15 @@ describe("today and lesson shape", () => {
     expect(ensureToday({ today: "2026-11-18", existing: [item({ subject: "english", done: false })], cursors: initialCursors() })).toBeNull();
     expect(lessonIsUsable("english", "场景：请假\n对话：I need to step out this afternoon.\n今天说：我今天会说的一句")).toBe(true);
     expect(lessonIsUsable("english", "只有一段阅读")).toBe(false);
-    expect(lessonIsUsable("thai", "泰文：ก\n读音：ko\n声调：中\n中文：鸡")).toBe(true);
+    const oneThai = "泰文：ก\n读音：ko\n声调：中\n中文：鸡";
+    const sixThai = Array.from({ length: 6 }, () => oneThai).join("\n");
+    expect(lessonIsUsable("thai", sixThai)).toBe(true);
+    expect(lessonIsUsable("thai", oneThai)).toBe(false);
     expect(lessonIsUsable("thai", "泰文：ก")).toBe(false);
     expect(fallbackLesson("thai")).toBe("今晚这门没写成，明天会再写。");
     expect(buildLessonMessages({ subject: "english", minutes: 8, title: "", body: "", unit: 2, carryId: null }, { english: 1, thai: 0 })[0].content).toContain("日常使用");
-    expect(buildLessonMessages({ subject: "thai", minutes: 8, title: "", body: "", unit: 1, carryId: null }, initialCursors())[0].content).toContain("字母和读音");
+    const thaiPrompt = buildLessonMessages({ subject: "thai", minutes: 8, title: "", body: "", unit: 1, carryId: null }, initialCursors())[0].content;
+    expect(thaiPrompt).toContain("字母和读音");
+    expect(thaiPrompt).toContain("每单元6个");
   });
 });

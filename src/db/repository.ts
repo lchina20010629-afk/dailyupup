@@ -2,9 +2,10 @@ import { neon } from "@neondatabase/serverless";
 import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/neon-http";
 import type { MediaKind } from "../domain/types";
+import type { Ask } from "../domain/types";
 import type { Cursors, LessonDraft, StudyItem, Subject } from "../lib/study";
-import { toCursors, toFragment, toStudyItem } from "./mappers";
-import { diaryDays, fragments, media, studyCursors, studyItems } from "./schema";
+import { toAsk, toCursors, toFragment, toStudyItem } from "./mappers";
+import { asks, diaryDays, fragments, media, studyCursors, studyItems } from "./schema";
 
 function database() {
   const url = process.env.DATABASE_URL;
@@ -176,6 +177,33 @@ export async function diaryFor(day: string) {
   const db = database();
   const [row] = await db.select().from(diaryDays).where(eq(diaryDays.day, day));
   return row ?? null;
+}
+
+export async function asksForDay(day: string): Promise<Ask[]> {
+  const db = database();
+  const rows = await db.select().from(asks).where(eq(asks.day, day)).orderBy(asc(asks.createdAt));
+  return rows.map((row) => toAsk(row));
+}
+
+export async function insertAsk(input: { id: string; day: string; createdAt: Date; question: string; answer: string }) {
+  const db = database();
+  await db.insert(asks).values({ ...input, fragmentId: null });
+}
+
+export async function attachAskFragment(id: string, fragmentId: string) {
+  const db = database();
+  await db.update(asks).set({ fragmentId }).where(eq(asks.id, id));
+}
+
+export async function deleteAsk(id: string) {
+  const db = database();
+  await db.delete(asks).where(eq(asks.id, id));
+}
+
+export async function askById(id: string): Promise<Ask | null> {
+  const db = database();
+  const [row] = await db.select().from(asks).where(eq(asks.id, id));
+  return row ? toAsk(row) : null;
 }
 
 export async function markStudyDone(id: string) {

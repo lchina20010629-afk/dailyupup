@@ -6,7 +6,7 @@ import { loadCursors, loadStudy, loadUnpolished, saveCursors, saveLessons, saveP
 
 export const maxDuration = 300;
 
-export async function POST(request: Request) {
+async function nightly(request: Request) {
   if (!cronAuthorized(request.headers.get("authorization"), process.env.CRON_SECRET ?? "")) {
     return NextResponse.json({ error: "未授权" }, { status: 401 });
   }
@@ -38,3 +38,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export const GET = nightly;
+export const POST = nightly;

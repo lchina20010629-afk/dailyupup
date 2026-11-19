@@ -9,6 +9,7 @@ export function proxy(request: NextRequest) {
   const decision = pageGate(request.nextUrl.pathname, hasSession);
   if (decision === "to-login") return NextResponse.redirect(new URL("/login", request.url));
   if (decision === "to-today") return NextResponse.redirect(new URL("/today", request.url));
+  if (decision === "to-study") return NextResponse.redirect(new URL("/study/business", request.url));
   return NextResponse.next();
 }
 
