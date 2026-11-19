@@ -24,19 +24,43 @@ const shared = {
 export const THEMES: Record<ThemeId, Theme> = {
   paper: createTheme({
     ...shared,
-    palette: { mode: "light", primary: { main: "#1e3a34" }, background: { default: "#f4f1eb", paper: "#fffdf8" } },
+    palette: {
+      mode: "light",
+      primary: { main: "#1f7a45", contrastText: "#ffffff" },
+      background: { default: "#f7f4ef", paper: "#fffdfb" },
+      text: { primary: "#1f1c19", secondary: "#8e877c" },
+      divider: "rgba(31, 28, 25, 0.08)",
+    },
   }),
   ink: createTheme({
     ...shared,
-    palette: { mode: "dark", primary: { main: "#8fbfa8" }, background: { default: "#121614", paper: "#1c2420" } },
+    palette: {
+      mode: "dark",
+      primary: { main: "#8dcea8", contrastText: "#142018" },
+      background: { default: "#141311", paper: "#1e1c19" },
+      text: { primary: "#f4f0e8", secondary: "#a8a094" },
+      divider: "rgba(244, 240, 232, 0.1)",
+    },
   }),
   tide: createTheme({
     ...shared,
-    palette: { mode: "light", primary: { main: "#0f766e" }, background: { default: "#f2f7f6", paper: "#ffffff" } },
+    palette: {
+      mode: "light",
+      primary: { main: "#0e7c6b", contrastText: "#ffffff" },
+      background: { default: "#f3f6f5", paper: "#ffffff" },
+      text: { primary: "#14211e", secondary: "#6f7d78" },
+      divider: "rgba(20, 33, 30, 0.08)",
+    },
   }),
   night: createTheme({
     ...shared,
-    palette: { mode: "dark", primary: { main: "#9db4ff" }, background: { default: "#10131a", paper: "#1a2030" } },
+    palette: {
+      mode: "dark",
+      primary: { main: "#9db4ff", contrastText: "#10141f" },
+      background: { default: "#0f1218", paper: "#181c26" },
+      text: { primary: "#eef1f6", secondary: "#9aa3b5" },
+      divider: "rgba(238, 241, 246, 0.1)",
+    },
   }),
 };
 

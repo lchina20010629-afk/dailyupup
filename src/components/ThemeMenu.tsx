@@ -7,9 +7,9 @@ import { useThemeChoice } from "@/components/Providers";
 import { THEME_IDS, THEME_LABELS, type ThemeId } from "@/lib/themes";
 
 const SWATCH: Record<ThemeId, string> = {
-  paper: "#1e3a34",
-  ink: "#8fbfa8",
-  tide: "#0f766e",
+  paper: "#1f7a45",
+  ink: "#8dcea8",
+  tide: "#0e7c6b",
   night: "#9db4ff",
 };
 

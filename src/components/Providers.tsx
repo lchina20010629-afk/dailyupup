@@ -20,11 +20,14 @@ export function useThemeChoice() {
 export function Providers({ children }: { children: ReactNode }) {
   const [id, setId] = useState<ThemeId>("paper");
   useEffect(() => {
-    setId(themeChoice(localStorage.getItem(STORAGE_KEY)));
+    const next = themeChoice(localStorage.getItem(STORAGE_KEY));
+    setId(next);
+    document.documentElement.dataset.theme = next;
   }, []);
 
   function set(next: ThemeId) {
     setId(next);
+    document.documentElement.dataset.theme = next;
     localStorage.setItem(STORAGE_KEY, next);
   }
 

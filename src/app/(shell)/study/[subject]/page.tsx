@@ -19,9 +19,9 @@ export default async function SubjectPage({ params }: { params: Promise<{ subjec
   const items = await todayStudy();
   const item = items.find((entry) => entry.subject === subject);
   return (
-    <>
+    <div className="study">
       <SubjectNav current={subject} />
       {item ? <LessonCard item={item} /> : <p className="empty">今天这门还没有内容。</p>}
-    </>
+    </div>
   );
 }

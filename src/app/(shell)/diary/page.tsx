@@ -10,7 +10,6 @@ export default async function DiaryIndexPage() {
   return (
     <>
       <header className="page-head">
-        <p className="eyebrow">整理过的日子</p>
         <h1>日记</h1>
       </header>
       {days.length === 0 ? <p>还没有记下的一天。今天写的，夜里 11 点这一小时会收进来。</p> : null}

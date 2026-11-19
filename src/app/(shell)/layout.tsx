@@ -10,8 +10,8 @@ export default function ShellLayout({ children }: { children: React.ReactNode })
           <TabBar />
           <ThemeMenu />
         </div>
+        <InstallHint />
       </div>
-      <InstallHint />
       <main className="shell">{children}</main>
     </>
   );

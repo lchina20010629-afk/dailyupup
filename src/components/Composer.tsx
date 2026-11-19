@@ -348,19 +348,21 @@ export function Composer({
           ) : (
           <div className="msg" key={entry.fragment.id}>
             <time className="stamp">{entry.fragment.createdAt ? shanghaiClock(new Date(entry.fragment.createdAt)) : ""}</time>
-            <article className="bubble">
-              {entry.fragment.body ? <p>{entry.fragment.body}</p> : null}
-              {entry.fragment.media.length > 0 ? (
-                <div className={entry.fragment.media.length > 1 ? "shots many" : "shots"}>
-                  {entry.fragment.media.map((file) => {
-                    const src = localUrls[file.id] ?? urls[file.id];
-                    if (file.kind === "photo" && src) return <ZoomPhoto key={file.id} src={src} />;
-                    if (file.kind === "video" && src) return <video key={file.id} src={src} controls />;
-                    return <span key={file.id}>{file.kind === "photo" ? "照片" : "视频"}</span>;
-                  })}
-                </div>
-              ) : null}
-            </article>
+            {entry.fragment.body ? (
+              <article className="bubble">
+                <p>{entry.fragment.body}</p>
+              </article>
+            ) : null}
+            {entry.fragment.media.length > 0 ? (
+              <div className={entry.fragment.media.length > 1 ? "shots many" : "shots"}>
+                {entry.fragment.media.map((file) => {
+                  const src = localUrls[file.id] ?? urls[file.id];
+                  if (file.kind === "photo" && src) return <ZoomPhoto key={file.id} src={src} />;
+                  if (file.kind === "video" && src) return <video key={file.id} src={src} controls />;
+                  return <span key={file.id}>{file.kind === "photo" ? "照片" : "视频"}</span>;
+                })}
+              </div>
+            ) : null}
             <div className="bubble-actions">
               {entry.fragment.body ? (
                 <button type="button" onClick={() => openEdit(entry.fragment)}>
@@ -587,7 +589,12 @@ async function compressImage(file: File): Promise<Blob> {
   const canvas = document.createElement("canvas");
   canvas.width = size.width;
   canvas.height = size.height;
-  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, size.width, size.height);
+  const context = canvas.getContext("2d");
+  if (context) {
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, size.width, size.height);
+    context.drawImage(bitmap, 0, 0, size.width, size.height);
+  }
   const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.8));
   return blob ?? file;
 }

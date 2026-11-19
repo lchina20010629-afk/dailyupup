@@ -17,28 +17,22 @@ export default async function DiaryDayPage({ params }: { params: Promise<{ date:
   return (
     <>
       <header className="page-head">
-        <p className="eyebrow">这一天</p>
         <h1>{shanghaiDayLabel(date)}</h1>
       </header>
-      <section className="panel">
-        <h2>整理</h2>
-        {diary?.polishedBody ? <p className="prose">{diary.polishedBody}</p> : <p>{PENDING_POLISH}</p>}
-      </section>
-      <section className="panel originals">
-        <h2>原文</h2>
+      <article className="entry">{diary?.polishedBody ? diary.polishedBody : PENDING_POLISH}</article>
+      <section className="sources">
+        <h2>当时记的</h2>
         {fragments.map((fragment) => (
           <article key={fragment.id}>
             <time>{shanghaiClock(new Date(fragment.createdAt))}</time>
-            {fragment.body ? <p>{fragment.body}</p> : null}
-            {fragment.media.map((file) => {
-              const url = urls.get(file.id);
-              if (!url) return null;
-              return file.kind === "photo" ? (
-                <ZoomPhoto key={file.id} src={url} />
-              ) : (
-                <video key={file.id} src={url} controls />
-              );
-            })}
+            <div>
+              {fragment.body ? <p>{fragment.body}</p> : null}
+              {fragment.media.map((file) => {
+                const url = urls.get(file.id);
+                if (!url) return null;
+                return file.kind === "photo" ? <ZoomPhoto key={file.id} src={url} /> : <video key={file.id} src={url} controls />;
+              })}
+            </div>
           </article>
         ))}
       </section>
