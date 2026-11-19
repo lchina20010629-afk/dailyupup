@@ -25,10 +25,7 @@ export default async function TodayPage() {
   }
   return (
     <section className="chat">
-      <header className="chat-title">
-        <strong>今天</strong>
-        <span>{heading}</span>
-      </header>
+      <p className="chat-title">{heading}</p>
       <Composer initial={items} asks={asks} urls={urls} />
     </section>
   );

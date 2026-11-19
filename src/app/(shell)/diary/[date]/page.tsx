@@ -1,7 +1,8 @@
+import { ZoomPhoto } from "@/components/ZoomPhoto";
 import { diaryFor, fragmentsForDay, mediaKey } from "@/db/repository";
 import { PENDING_POLISH } from "@/lib/polish";
 import { signRead } from "@/lib/r2";
-import { shanghaiClock } from "@/lib/time";
+import { shanghaiClock, shanghaiDayLabel } from "@/lib/time";
 
 export default async function DiaryDayPage({ params }: { params: Promise<{ date: string }> }) {
   const { date } = await params;
@@ -17,7 +18,7 @@ export default async function DiaryDayPage({ params }: { params: Promise<{ date:
     <>
       <header className="page-head">
         <p className="eyebrow">这一天</p>
-        <h1>{date}</h1>
+        <h1>{shanghaiDayLabel(date)}</h1>
       </header>
       <section className="panel">
         <h2>整理</h2>
@@ -33,7 +34,7 @@ export default async function DiaryDayPage({ params }: { params: Promise<{ date:
               const url = urls.get(file.id);
               if (!url) return null;
               return file.kind === "photo" ? (
-                <img key={file.id} src={url} alt="" />
+                <ZoomPhoto key={file.id} src={url} />
               ) : (
                 <video key={file.id} src={url} controls />
               );

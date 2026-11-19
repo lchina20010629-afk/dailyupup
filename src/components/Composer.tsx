@@ -12,6 +12,7 @@ import Typography from "@mui/material/Typography";
 import { useEffect, useRef, useState } from "react";
 import type { Ask, Fragment, MediaKind } from "@/domain/types";
 import { threadItems } from "@/lib/asks";
+import { ZoomPhoto } from "@/components/ZoomPhoto";
 import { appendFragment, targetImageSize, VIDEO_MAX_BYTES } from "@/lib/fragments";
 import { shanghaiClock } from "@/lib/time";
 
@@ -57,6 +58,7 @@ export function Composer({
   const [listening, setListening] = useState(false);
   const [editing, setEditing] = useState<Fragment | null>(null);
   const [draft, setDraft] = useState("");
+  const [recalling, setRecalling] = useState<{ kind: "note" | "ask"; id: string } | null>(null);
   const [localUrls, setLocalUrls] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
@@ -67,6 +69,18 @@ export function Composer({
     const node = threadRef.current;
     if (node) node.scrollTop = node.scrollHeight;
   }, [thread.length, attached.length, waiting]);
+
+  useEffect(() => {
+    if (!emojiOpen && !moreOpen) return;
+    function closeIfOutside(event: PointerEvent) {
+      const node = event.target instanceof Element ? event.target : null;
+      if (node?.closest(".picker.open, .attach.open, [data-popup-toggle]")) return;
+      setEmojiOpen(false);
+      setMoreOpen(false);
+    }
+    document.addEventListener("pointerdown", closeIfOutside);
+    return () => document.removeEventListener("pointerdown", closeIfOutside);
+  }, [emojiOpen, moreOpen]);
 
   function insert(token: string) {
     const field = inputRef.current;
@@ -157,6 +171,17 @@ export function Composer({
       const payload = (await response.json().catch(() => null)) as { error?: string } | null;
       setError(payload?.error ?? "没有改成");
     }
+  }
+
+  async function confirmRecall() {
+    const target = recalling;
+    if (!target) return;
+    setRecalling(null);
+    if (target.kind === "ask") {
+      await removeAsk(target.id);
+      return;
+    }
+    await remove(target.id);
   }
 
   async function remove(id: string) {
@@ -300,8 +325,8 @@ export function Composer({
                   <p>{entry.ask.question}</p>
                 </article>
                 <div className="bubble-actions">
-                  <button type="button" onClick={() => void removeAsk(entry.ask.id)}>
-                    删
+                  <button type="button" onClick={() => setRecalling({ kind: "ask", id: entry.ask.id })}>
+                    撤回
                   </button>
                 </div>
               </div>
@@ -329,7 +354,7 @@ export function Composer({
                 <div className={entry.fragment.media.length > 1 ? "shots many" : "shots"}>
                   {entry.fragment.media.map((file) => {
                     const src = localUrls[file.id] ?? urls[file.id];
-                    if (file.kind === "photo" && src) return <img key={file.id} src={src} alt="" />;
+                    if (file.kind === "photo" && src) return <ZoomPhoto key={file.id} src={src} />;
                     if (file.kind === "video" && src) return <video key={file.id} src={src} controls />;
                     return <span key={file.id}>{file.kind === "photo" ? "照片" : "视频"}</span>;
                   })}
@@ -337,11 +362,13 @@ export function Composer({
               ) : null}
             </article>
             <div className="bubble-actions">
-              <button type="button" onClick={() => openEdit(entry.fragment)}>
-                改
-              </button>
-              <button type="button" onClick={() => void remove(entry.fragment.id)}>
-                删
+              {entry.fragment.body ? (
+                <button type="button" onClick={() => openEdit(entry.fragment)}>
+                  修改
+                </button>
+              ) : null}
+              <button type="button" onClick={() => setRecalling({ kind: "note", id: entry.fragment.id })}>
+                撤回
               </button>
             </div>
           </div>
@@ -456,6 +483,7 @@ export function Composer({
                     type="button"
                     className="tool"
                     aria-label="更多"
+                    data-popup-toggle=""
                     aria-pressed={moreOpen}
                     onClick={() => {
                       setMoreOpen((open) => !open);
@@ -469,6 +497,7 @@ export function Composer({
                   type="button"
                   className="tool"
                   aria-label="表情"
+                  data-popup-toggle=""
                   aria-pressed={emojiOpen}
                   onClick={() => {
                     setEmojiOpen((open) => !open);
@@ -498,7 +527,7 @@ export function Composer({
           <form
             className="edit-card"
             role="dialog"
-            aria-label="改这条"
+            aria-label="修改这条"
             onSubmit={(event) => {
               event.preventDefault();
               void commitEdit();
@@ -507,6 +536,7 @@ export function Composer({
               if (event.key === "Escape") setEditing(null);
             }}
           >
+            <p className="edit-label">修改这条</p>
             <TextareaAutosize
               className="composer-input edit-input"
               value={draft}
@@ -525,6 +555,26 @@ export function Composer({
               </button>
             </div>
           </form>
+        </div>
+      ) : null}
+      {recalling ? (
+        <div
+          className="edit-layer"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setRecalling(null);
+          }}
+        >
+          <div className="edit-card" role="dialog" aria-label="确认撤回" onKeyDown={(event) => event.key === "Escape" && setRecalling(null)}>
+            <p className="confirm-copy">撤回后，这条就从今天去掉了。</p>
+            <div className="edit-actions">
+              <button type="button" onClick={() => setRecalling(null)}>
+                取消
+              </button>
+              <button type="button" className="edit-save" onClick={() => void confirmRecall()}>
+                撤回
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </>

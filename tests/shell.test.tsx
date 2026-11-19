@@ -91,8 +91,8 @@ describe("shell", () => {
     );
     expect(screen.getByRole("button", { name: "记" }).getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByRole("button", { name: "问" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "改" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "删" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "修改" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "撤回" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "语音" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "表情" })).toBeTruthy();
     expect(screen.getByLabelText("照片").hasAttribute("multiple")).toBe(true);

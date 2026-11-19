@@ -15,7 +15,7 @@ const shared = {
   spacing: 4,
   shape: { borderRadius: 10 },
   typography: {
-    fontFamily: '"Roboto", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Segoe UI", sans-serif',
     fontSize: 14,
     h1: { fontSize: "1.15rem", fontWeight: 600, lineHeight: 1.3 },
   },

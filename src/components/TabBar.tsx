@@ -1,7 +1,5 @@
 "use client";
 
-import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,16 +19,14 @@ export function TabBar() {
   const pathname = usePathname() ?? "";
   return (
     <nav className="tabbar" aria-label="栏目">
-      <Stack direction="row" spacing={0.5}>
-        {links.map((link) => {
-          const on = selected(pathname, link.href);
-          return (
-            <Button key={link.href} component={Link} href={link.href} size="small" variant={on ? "contained" : "text"} aria-current={on ? "page" : undefined}>
-              {link.label}
-            </Button>
-          );
-        })}
-      </Stack>
+      {links.map((link) => {
+        const on = selected(pathname, link.href);
+        return (
+          <Link key={link.href} href={link.href} aria-current={on ? "page" : undefined}>
+            {link.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

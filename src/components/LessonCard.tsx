@@ -36,7 +36,7 @@ export function LessonCard({ item }: { item: StudyItem }) {
   }
 
   return (
-    <Paper component="article" variant="outlined" sx={{ p: 1.5 }}>
+    <Paper className="lesson" component="article" variant="outlined" sx={{ p: 1.5, borderRadius: 4 }}>
       <Typography variant="caption" color="primary" sx={{ fontWeight: 600 }}>
         {TITLE[item.subject]} · {item.minutes} 分钟
       </Typography>
@@ -53,7 +53,7 @@ export function LessonCard({ item }: { item: StudyItem }) {
                 <Typography variant="body2" sx={{ flex: 1, lineHeight: 1.45 }}>
                   {line.text}
                 </Typography>
-                <Button type="button" size="small" variant="outlined" onClick={() => speak(line.spoken!, lang)} sx={{ flexShrink: 0 }}>
+                <Button type="button" size="small" variant="text" onClick={() => speak(line.spoken!, lang)} sx={{ flexShrink: 0, minWidth: 0, borderRadius: 999 }}>
                   读这句
                 </Button>
               </Stack>
@@ -64,7 +64,7 @@ export function LessonCard({ item }: { item: StudyItem }) {
             ),
           )}
           {spoken.length > 0 ? (
-            <Button type="button" size="small" variant="contained" onClick={() => speakAll(spoken, lang)} sx={{ alignSelf: "flex-start" }}>
+            <Button type="button" size="small" variant="contained" onClick={() => speakAll(spoken, lang)} sx={{ alignSelf: "flex-start", borderRadius: 999 }}>
               全文朗读
             </Button>
           ) : null}

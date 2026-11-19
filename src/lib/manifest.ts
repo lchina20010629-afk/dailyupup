@@ -5,11 +5,13 @@ export function buildManifest() {
     display: "standalone" as const,
     start_url: "/today" as const,
     lang: "zh-CN" as const,
-    background_color: "#f6f4ef",
-    theme_color: "#9a3412",
+    background_color: "#f4f1eb",
+    theme_color: "#1e3a34",
     icons: [
-      { src: "/icons/192", sizes: "192x192" as const, type: "image/png" as const },
-      { src: "/icons/512", sizes: "512x512" as const, type: "image/png" as const },
+      { src: "/icon-192.png", sizes: "192x192" as const, type: "image/png" as const, purpose: "any" as const },
+      { src: "/icon-512.png", sizes: "512x512" as const, type: "image/png" as const, purpose: "any" as const },
+      { src: "/icon-192.png", sizes: "192x192" as const, type: "image/png" as const, purpose: "maskable" as const },
+      { src: "/icon-512.png", sizes: "512x512" as const, type: "image/png" as const, purpose: "maskable" as const },
     ],
   };
 }
