@@ -55,6 +55,16 @@ a {
   button:active {
     transform: scale(0.97);
   }
+
+  .tabbar a:active,
+  .subjects a:active,
+  .days a:active {
+    transform: none;
+  }
+
+  .stage {
+    animation: rise 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }
 
 @keyframes rise {
@@ -151,52 +161,92 @@ body:has(.chat) .topbar {
   letter-spacing: 0;
 }
 
+.stage {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .tabbar {
   display: flex;
   min-width: 0;
   gap: 2px;
-  padding: 3px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--mui-palette-text-primary) 7%, transparent);
+  padding: 0;
+  background: transparent;
 }
 
 .tabbar a,
 .subjects a {
-  display: grid;
-  place-items: center;
   color: var(--mui-palette-text-secondary);
   text-decoration: none;
-  font-size: 13px;
   font-weight: 560;
 }
 
 .tabbar a {
-  min-width: 56px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 52px;
+  height: 40px;
+  padding: 0 8px;
+  border-radius: 0;
+  font-size: 16px;
+}
+
+.tabbar a[aria-current="page"] {
+  color: var(--mui-palette-text-primary);
+  font-weight: 680;
+}
+
+.tabbar a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 5px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--mui-palette-primary-main);
 }
 
 .subjects {
-  display: flex;
-  gap: 2px;
-  margin: 4px 0 8px;
-  padding: 3px;
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--mui-palette-text-primary) 7%, transparent);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-bottom: 1px solid var(--mui-palette-divider);
 }
 
 .subjects a {
-  flex: 1;
-  height: 34px;
-  border-radius: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 48px;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-size: 15px;
 }
 
-.tabbar a[aria-current="page"],
 .subjects a[aria-current="page"] {
-  background: var(--mui-palette-background-paper);
   color: var(--mui-palette-text-primary);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--mui-palette-text-primary) 14%, transparent);
+  border-bottom-color: var(--mui-palette-primary-main);
+  font-weight: 680;
+}
+
+.done-mark {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--mui-palette-primary-main);
+}
+
+.done-mark.pending {
+  background: transparent;
 }
 
 .theme-dot {
@@ -233,6 +283,10 @@ body:has(.chat) {
   min-height: 0;
   height: auto;
   padding: 0;
+  overflow: hidden;
+}
+
+.shell:has(.chat) > .stage {
   overflow: hidden;
 }
 
@@ -813,6 +867,10 @@ body:has(.study) {
   padding-bottom: 0;
 }
 
+.shell:has(.study) > .stage {
+  overflow: hidden;
+}
+
 .study {
   display: flex;
   flex-direction: column;
@@ -831,7 +889,19 @@ body:has(.study) {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 4px 4px 12px;
+  padding: 12px 4px 12px;
+  scroll-behavior: smooth;
+}
+
+.study-top {
+  flex: 0 0 auto;
+  padding-top: 4px;
+}
+
+.study-top > p {
+  margin: 0 2px 6px;
+  color: var(--mui-palette-text-secondary);
+  font-size: 13px;
 }
 
 .lesson-kicker {
@@ -858,12 +928,27 @@ body:has(.study) {
 
 .spoken {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin: 0 -8px 4px;
+  padding: 8px 8px 4px;
+  border-radius: 12px;
+}
+
+.spoken:active {
+  background: color-mix(in srgb, var(--mui-palette-text-primary) 5%, transparent);
 }
 
 .spoken p {
-  flex: 1;
+  margin: 0;
+}
+
+.spoken .gloss {
+  margin-top: 2px;
+  color: var(--mui-palette-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .spoken button,
@@ -872,9 +957,19 @@ body:has(.study) {
   background: transparent;
   color: var(--mui-palette-text-secondary);
   font: inherit;
-  font-size: 12px;
-  padding: 2px 0;
   cursor: pointer;
+}
+
+.spoken button {
+  align-self: flex-start;
+  min-height: 44px;
+  margin-bottom: 4px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--mui-palette-primary-main) 12%, transparent);
+  color: var(--mui-palette-primary-main);
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .lesson-bar {
@@ -964,27 +1059,29 @@ body:has(.study) {
 .days {
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 8px 4px 0;
   overflow: hidden;
   border: 0;
-  border-radius: 18px;
-  background: var(--mui-palette-background-paper);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--mine-ink) 5%, transparent);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .days a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 56px;
-  padding: 0 18px;
+  min-height: 76px;
+  padding: 0 2px;
   background: transparent;
   color: var(--mui-palette-text-primary);
   text-decoration: none;
   border: 0;
   border-bottom: 1px solid var(--mui-palette-divider);
   border-radius: 0;
-  font-size: 17px;
+  font-size: 26px;
+  font-weight: 640;
+  letter-spacing: -0.03em;
 }
 
 .days li:last-child a {

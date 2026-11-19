@@ -1,19 +1,25 @@
 import type { Subject } from "./study";
 
-export type LessonLine = { text: string; spoken: string | null };
+export type LessonLine = { text: string; spoken: string | null; gloss: string | null };
 
 export function lessonLines(subject: Extract<Subject, "english" | "thai">, body: string): LessonLine[] {
   const lines: LessonLine[] = [];
   for (const raw of body.split(/\n+/)) {
     const line = raw.trim();
     if (!line || /^单元\s*\d+.*分钟/.test(line)) continue;
+    if (subject === "english" && /^译[:：]/.test(line)) {
+      const gloss = line.replace(/^译[:：]\s*/, "").trim();
+      const last = lines.at(-1);
+      if (last?.spoken && gloss) last.gloss = gloss;
+      continue;
+    }
     if (subject === "thai") {
       const value = stripLabel(line);
-      lines.push(/[\u0E00-\u0E7F]/.test(value) ? { text: line, spoken: value } : { text: line, spoken: null });
+      lines.push(/[\u0E00-\u0E7F]/.test(value) ? { text: line, spoken: value, gloss: null } : { text: line, spoken: null, gloss: null });
       continue;
     }
     if (mostlyChinese(line) || !/[A-Za-z]/.test(line)) {
-      lines.push({ text: line, spoken: null });
+      lines.push({ text: line, spoken: null, gloss: null });
       continue;
     }
     const speaker = line.match(/^([A-Za-z][A-Za-z .'-]{0,20}):\s*/);
@@ -23,12 +29,12 @@ export function lessonLines(subject: Extract<Subject, "english" | "thai">, body:
       .map((sentence) => sentence.trim())
       .filter((sentence) => /[A-Za-z]/.test(sentence) && !mostlyChinese(sentence));
     if (sentences.length === 0) {
-      lines.push({ text: line, spoken: null });
+      lines.push({ text: line, spoken: null, gloss: null });
       continue;
     }
     sentences.forEach((sentence, index) => {
       const text = speaker && index === 0 ? `${speaker[1]}: ${sentence}` : sentence;
-      lines.push({ text, spoken: sentence });
+      lines.push({ text, spoken: sentence, gloss: null });
     });
   }
   return lines;

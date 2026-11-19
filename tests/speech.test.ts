@@ -16,6 +16,10 @@ describe("speakable lines", () => {
       "Morning, Anna!",
       "Welcome back.",
     ]);
+    expect(lessonLines("english", "A: Morning!\n译：早。\nHow's it going?\n译：怎么样？").map((line) => [line.text, line.gloss])).toEqual([
+      ["A: Morning!", "早。"],
+      ["How's it going?", "怎么样？"],
+    ]);
     expect(speakableLines("english", "\"Welcome back\" — 同事休假回来最常用的开场白。")).toEqual([]);
   });
 });

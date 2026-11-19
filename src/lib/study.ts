@@ -90,7 +90,7 @@ function markerCount(body: string, mark: string): number {
 }
 
 export function lessonIsUsable(subject: Subject, body: string): boolean {
-  if (subject === "english") return body.includes("场景：") && body.includes("对话：") && body.includes("今天说：");
+  if (subject === "english") return body.includes("场景：") && body.includes("对话：") && body.includes("今天说：") && body.includes("译：");
   if (subject === "thai") return ["泰文：", "读音：", "声调：", "中文："].every((mark) => markerCount(body, mark) >= 6);
   return body.trim().length >= 20;
 }
@@ -106,7 +106,7 @@ export function buildLessonMessages(
   const system = {
     business: "写一个商业概念，三到五行，当天能想一想。",
     english:
-      "本人已有大学英语四级水平。以口语和日常使用为主，可以比四级课本更深：语气、衔接和职场里真会说的话。不要出考试阅读。正文必须包含场景：、对话：、今天说：。",
+      "本人已有大学英语四级水平。以口语和日常使用为主，可以比四级课本更深：语气、衔接和职场里真会说的话。不要出考试阅读。正文必须包含场景：、对话：、今天说：。对话和今天说里的每个英文句子单独成行，下一行用译：写出这句的中文，短、口语。场景说明和词汇讲解不要写译：。",
     thai: "零基础。从字母和读音开始，单元连续，不跳、不重复。单元1到8教辅音，每单元6个，从 ก 按字母表接着上一单元。单元9到14教元音，每单元6个。单元15教五个声调，每个声调两个例词。单元16起教日常短句，每单元8句。每一项都写成四行：泰文：、读音：、声调：、中文：。辅音和元音的中文要有字母名和一个例词。一项都不要少。",
     cultivation: "写一个职场里用得上的做法。",
   }[draft.subject];

@@ -38,7 +38,7 @@ describe("nightly order", () => {
       chat: async (messages) => {
         calls.push(messages[0].content.slice(0, 12));
         if (messages[0].content.includes("字母和读音")) return "太短";
-        if (messages[0].content.includes("日常使用")) return "场景：请假\n对话：I need to step out.\n今天说：我今天会说的一句";
+        if (messages[0].content.includes("日常使用")) return "场景：请假\n对话：I need to step out.\n译：我得出去一下。\n今天说：我今天会说的一句";
         return "这是一段足够长的新课文，用来填满二十个字。";
       },
     });

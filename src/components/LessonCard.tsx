@@ -42,7 +42,10 @@ export function LessonCard({ item }: { item: StudyItem }) {
           lines.map((line, index) =>
             line.spoken ? (
               <div key={`${index}-${line.text}`} className="spoken">
-                <p>{line.text}</p>
+                <div>
+                  <p>{line.text}</p>
+                  {line.gloss ? <p className="gloss">{line.gloss}</p> : null}
+                </div>
                 <button type="button" onClick={() => speak(line.spoken!, lang)}>
                   读这句
                 </button>
@@ -54,7 +57,7 @@ export function LessonCard({ item }: { item: StudyItem }) {
             ),
           )
         ) : (
-          <p className="lesson-note">{item.body}</p>
+          <p className="lesson-note">{item.body.replace(/\*\*/g, "")}</p>
         )}
       </div>
       <footer className="lesson-bar">

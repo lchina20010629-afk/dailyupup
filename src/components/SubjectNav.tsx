@@ -10,12 +10,13 @@ const LINKS: { href: string; label: string; subject: Subject }[] = [
   { href: "/study/cultivation", label: "修身", subject: "cultivation" },
 ];
 
-export function SubjectNav({ current }: { current: Subject }) {
+export function SubjectNav({ current, done = [] }: { current: Subject; done?: Subject[] }) {
   return (
     <nav className="subjects" aria-label="学习栏目">
       {LINKS.map((link) => (
         <Link key={link.href} href={link.href} aria-current={link.subject === current ? "page" : undefined}>
           {link.label}
+          {done.includes(link.subject) ? <i className="done-mark" aria-hidden="true" /> : <i className="done-mark pending" aria-hidden="true" />}
         </Link>
       ))}
     </nav>

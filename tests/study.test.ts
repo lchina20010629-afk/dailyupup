@@ -61,7 +61,7 @@ describe("today and lesson shape", () => {
       ["cultivation", 6, null],
     ]);
     expect(ensureToday({ today: "2026-11-18", existing: [item({ subject: "english", done: false })], cursors: initialCursors() })).toBeNull();
-    expect(lessonIsUsable("english", "场景：请假\n对话：I need to step out this afternoon.\n今天说：我今天会说的一句")).toBe(true);
+    expect(lessonIsUsable("english", "场景：请假\n对话：I need to step out this afternoon.\n译：我今天下午得出去一下。\n今天说：我今天会说的一句")).toBe(true);
     expect(lessonIsUsable("english", "只有一段阅读")).toBe(false);
     const oneThai = "泰文：ก\n读音：ko\n声调：中\n中文：鸡";
     const sixThai = Array.from({ length: 6 }, () => oneThai).join("\n");
